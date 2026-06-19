@@ -23,7 +23,7 @@
                             <th>Nama</th>
                             <th>Jabatan</th>
                             <th>Level</th>
-                            <th>Telepon</th>
+                            <th>NIP</th>
                             <th>Status</th>
                             <th class="text-end pe-3">Aksi</th>
                         </tr>

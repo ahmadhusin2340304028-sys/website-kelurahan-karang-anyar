@@ -15,9 +15,14 @@
 
 <section class="py-5">
     <div class="container">
-        <h1 class="section-title h3 mb-2">
-            {{ \App\Models\Setting::get('peta_wilayah_judul', 'Peta Wilayah Kelurahan') }}
-        </h1>
+        <div class="row g-4">
+            <div class="col-lg-3">
+                @include('public.profile.sidebar')
+            </div>
+            <div class="col-lg-9">
+                <h1 class="section-title h3 mb-2">
+                    {{ \App\Models\Setting::get('peta_wilayah_judul', 'Peta Wilayah Kelurahan') }}
+                </h1>
         @if(\App\Models\Setting::get('peta_wilayah_keterangan'))
             <p class="text-muted mb-4">{{ \App\Models\Setting::get('peta_wilayah_keterangan') }}</p>
         @else
@@ -62,6 +67,8 @@
             </div>
         </div>
         @endif
+            </div>
+        </div>
     </div>
 </section>
 

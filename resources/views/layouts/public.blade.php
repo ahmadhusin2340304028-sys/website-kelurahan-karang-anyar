@@ -66,8 +66,61 @@
         .card-news .card-img-top { height: 200px; object-fit: cover; }
         .badge-category { background: var(--gov-blue); font-size: 0.75rem; }
 
-        /* Announcements */
-        .announcement-bar { background: #fff3cd; border-left: 4px solid var(--gov-gold); }
+        /* ── Announcement bar ──────────────────────────────────── */
+        .announcement-bar {
+            background: linear-gradient(90deg, #fffbea 0%, #fff9e0 100%);
+            border-left: 4px solid var(--gov-gold);
+            border-bottom: 1px solid #f0d87a;
+        }
+        .announcement-ticker-wrap {
+            overflow: hidden;
+            flex: 1;
+            min-width: 0;
+        }
+        .announcement-ticker-wrap span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+        .ann-detail-btn {
+            font-size: 0.78rem;
+            padding: 2px 10px;
+            border-color: var(--gov-gold);
+            color: #856404;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .ann-detail-btn:hover {
+            background: var(--gov-gold);
+            color: #fff;
+            border-color: var(--gov-gold);
+        }
+        /* Modal pengumuman */
+        #announcementModal .modal-header {
+            background: linear-gradient(135deg, var(--gov-blue) 0%, var(--gov-blue-dark) 100%);
+            color: #fff;
+        }
+        #announcementModal .modal-header .btn-close { filter: invert(1); }
+        #announcementModal .ann-meta {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.83rem;
+        }
+        #announcementModal .ann-content-body {
+            font-size: 0.97rem;
+            line-height: 1.75;
+            color: #2d2d2d;
+            white-space: pre-wrap;
+        }
+        /* Nav dots for multi-announcement */
+        .ann-nav-dots { display: flex; gap: 6px; align-items: center; }
+        .ann-nav-dots .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #ccc; cursor: pointer; transition: background .2s;
+        }
+        .ann-nav-dots .dot.active { background: var(--gov-gold); }
 
         /* Officials */
         .official-card img { width: 90px; height: 90px; object-fit: cover; border-radius: 50%; border: 3px solid var(--gov-blue); }
@@ -198,23 +251,130 @@
         </div>
     </nav>
 
-    {{-- Active Announcements Banner --}}
-    @php $activeAnnouncements = \App\Models\Announcement::active()->take(3)->get(); @endphp
+    {{-- ══ Active Announcements Banner ══════════════════════════════════════ --}}
+    @php
+        $activeAnnouncements = \App\Models\Announcement::active()
+            ->orderBy('start_date', 'desc')
+            ->take(5)
+            ->get();
+    @endphp
     @if($activeAnnouncements->isNotEmpty())
-        <div class="announcement-bar py-2">
-            <div class="container">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-warning text-dark me-2">
-                        <i class="bi bi-megaphone-fill"></i> Pengumuman
-                    </span>
-                    <div id="announcementTicker">
-                        @foreach($activeAnnouncements as $ann)
-                            <span class="{{ !$loop->first ? 'd-none' : '' }}">{{ $ann->title }}</span>
-                        @endforeach
-                    </div>
+    <div class="announcement-bar py-2">
+        <div class="container">
+            <div class="d-flex align-items-center gap-2">
+
+                {{-- Label --}}
+                <span class="badge bg-warning text-dark flex-shrink-0">
+                    <i class="bi bi-megaphone-fill me-1"></i>Pengumuman
+                </span>
+
+                {{-- Ticker teks --}}
+                <div class="announcement-ticker-wrap">
+                    @foreach($activeAnnouncements as $ann)
+                        <span id="annTick-{{ $ann->id }}"
+                              class="{{ !$loop->first ? 'd-none' : '' }} fw-semibold text-dark small">
+                            {{ $ann->title }}
+                        </span>
+                    @endforeach
+                </div>
+
+                {{-- Tombol Selengkapnya --}}
+                <button type="button"
+                        class="btn btn-sm btn-outline-warning ann-detail-btn"
+                        id="annDetailBtn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#announcementModal"
+                        data-index="0">
+                    <i class="bi bi-info-circle me-1"></i>Selengkapnya
+                </button>
+
+            </div>
+
+            {{-- Nav dots (jika >1 pengumuman) --}}
+            @if($activeAnnouncements->count() > 1)
+            <div class="d-flex justify-content-center mt-1">
+                <div class="ann-nav-dots">
+                    @foreach($activeAnnouncements as $i => $ann)
+                        <span class="dot {{ $i === 0 ? 'active' : '' }}"
+                              data-index="{{ $i }}"
+                              title="{{ $ann->title }}"></span>
+                    @endforeach
                 </div>
             </div>
+            @endif
         </div>
+    </div>
+
+    {{-- ══ Modal Detail Pengumuman ══════════════════════════════════════════ --}}
+    <div class="modal fade" id="announcementModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+
+                <div class="modal-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-megaphone-fill fs-5"></i>
+                        <div>
+                            <h5 class="modal-title mb-0 fw-bold" id="annModalTitle">Pengumuman</h5>
+                            <small class="text-white-50" id="annModalCount"></small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    {{-- Meta info --}}
+                    <div class="ann-meta mb-3 d-flex flex-wrap gap-3">
+                        <span id="annModalDate">
+                            <i class="bi bi-calendar3 me-1 text-primary"></i>
+                            <span></span>
+                        </span>
+                        <span id="annModalUntil" class="d-none">
+                            <i class="bi bi-calendar-x me-1 text-danger"></i>
+                            Berlaku hingga: <span></span>
+                        </span>
+                    </div>
+
+                    {{-- Isi pengumuman --}}
+                    <div class="ann-content-body" id="annModalContent"></div>
+                </div>
+
+                <div class="modal-footer justify-content-between">
+                    {{-- Navigasi antar pengumuman --}}
+                    <div class="d-flex align-items-center gap-2">
+                        @if($activeAnnouncements->count() > 1)
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="annPrevBtn">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <span class="small text-muted" id="annPageInfo"></span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="annNextBtn">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                        @endif
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Tutup
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {{-- Data pengumuman untuk JS --}}
+    @php
+        $annData = $activeAnnouncements->map(function ($a) {
+            return [
+                'id'         => $a->id,
+                'title'      => $a->title,
+                'content'    => $a->content,
+                'start_date' => $a->start_date->translatedFormat('d F Y'),
+                'end_date'   => $a->end_date ? $a->end_date->translatedFormat('d F Y') : null,
+            ];
+        })->values()->toArray();
+    @endphp
+    <script>
+        window._announcements = @json($annData);
+    </script>
     @endif
 
     {{-- Flash Messages --}}
@@ -306,25 +466,123 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Lazy load images
-        document.addEventListener('DOMContentLoaded', () => {
-            const imgs = document.querySelectorAll('img[loading="lazy"]');
-            const observer = new IntersectionObserver(entries => {
-                entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('loaded'); });
-            });
-            imgs.forEach(img => observer.observe(img));
+    document.addEventListener('DOMContentLoaded', () => {
 
-            // Announcement ticker
-            const items = document.querySelectorAll('#announcementTicker span');
-            if (items.length > 1) {
-                let idx = 0;
-                setInterval(() => {
-                    items[idx].classList.add('d-none');
-                    idx = (idx + 1) % items.length;
-                    items[idx].classList.remove('d-none');
-                }, 4000);
-            }
+        // ── Lazy load images ───────────────────────────────────────────
+        const imgs = document.querySelectorAll('img[loading="lazy"]');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('loaded'); });
         });
+        imgs.forEach(img => observer.observe(img));
+
+        // ── Announcement ticker & modal ────────────────────────────────
+        const anns = window._announcements || [];
+        if (!anns.length) return;
+
+        let currentIdx = 0;
+        const tickInterval = 5000; // ms antar pergantian
+        let tickTimer = null;
+
+        // Elemen ticker
+        const tickSpans   = document.querySelectorAll('[id^="annTick-"]');
+        const dots        = document.querySelectorAll('.ann-nav-dots .dot');
+        const detailBtn   = document.getElementById('annDetailBtn');
+
+        // Elemen modal
+        const modalTitle   = document.getElementById('annModalTitle');
+        const modalCount   = document.getElementById('annModalCount');
+        const modalDate    = document.querySelector('#annModalDate span');
+        const modalUntil   = document.getElementById('annModalUntil');
+        const modalUntilTx = document.querySelector('#annModalUntil span');
+        const modalContent = document.getElementById('annModalContent');
+        const pageInfo     = document.getElementById('annPageInfo');
+        const prevBtn      = document.getElementById('annPrevBtn');
+        const nextBtn      = document.getElementById('annNextBtn');
+
+        // Ganti tampilan ticker ke index tertentu
+        function showTicker(idx) {
+            tickSpans.forEach(s => s.classList.add('d-none'));
+            dots.forEach(d => d.classList.remove('active'));
+            const target = document.getElementById('annTick-' + anns[idx].id);
+            if (target) target.classList.remove('d-none');
+            if (dots[idx]) dots[idx].classList.add('active');
+            currentIdx = idx;
+        }
+
+        // Isi konten modal
+        function fillModal(idx) {
+            const a = anns[idx];
+            if (!a) return;
+            modalTitle.textContent   = a.title;
+            modalCount.textContent   = anns.length > 1 ? `${idx + 1} dari ${anns.length} pengumuman` : '';
+            modalDate.textContent    = 'Mulai berlaku: ' + a.start_date;
+            if (a.end_date) {
+                modalUntil.classList.remove('d-none');
+                modalUntilTx.textContent = a.end_date;
+            } else {
+                modalUntil.classList.add('d-none');
+            }
+            // Tampilkan konten dengan newline dihormati
+            modalContent.textContent = a.content;
+            if (pageInfo) pageInfo.textContent = `${idx + 1} / ${anns.length}`;
+        }
+
+        // Auto-ticker
+        function startTicker() {
+            if (anns.length <= 1) return;
+            tickTimer = setInterval(() => {
+                const next = (currentIdx + 1) % anns.length;
+                showTicker(next);
+            }, tickInterval);
+        }
+        function resetTicker() {
+            clearInterval(tickTimer);
+            startTicker();
+        }
+
+        // Klik tombol "Selengkapnya"
+        if (detailBtn) {
+            detailBtn.addEventListener('click', () => {
+                fillModal(currentIdx);
+            });
+        }
+
+        // Klik dot navigator
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const idx = parseInt(dot.dataset.index);
+                showTicker(idx);
+                resetTicker();
+            });
+        });
+
+        // Navigasi prev/next di modal
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                const idx = (currentIdx - 1 + anns.length) % anns.length;
+                showTicker(idx);
+                resetTicker();
+                fillModal(idx);
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const idx = (currentIdx + 1) % anns.length;
+                showTicker(idx);
+                resetTicker();
+                fillModal(idx);
+            });
+        }
+
+        // Update modal saat dibuka (ikut currentIdx yang sedang tampil di ticker)
+        const modalEl = document.getElementById('announcementModal');
+        if (modalEl) {
+            modalEl.addEventListener('show.bs.modal', () => fillModal(currentIdx));
+        }
+
+        // Mulai ticker
+        startTicker();
+    });
     </script>
 
     @stack('scripts')

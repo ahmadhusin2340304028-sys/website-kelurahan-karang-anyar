@@ -19,8 +19,8 @@ class StorePostRequest extends FormRequest
             'published_at'     => ['nullable', 'date'],
             'meta_title'       => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
-            'thumbnail'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'images.*'         => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'thumbnail'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'images.*'         => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
     }
 
@@ -31,7 +31,8 @@ class StorePostRequest extends FormRequest
             'body.required'      => 'Isi berita wajib diisi.',
             'status.required'    => 'Status berita wajib dipilih.',
             'thumbnail.image'    => 'Thumbnail harus berupa gambar.',
-            'thumbnail.max'      => 'Ukuran thumbnail maksimal 2MB.',
+            'thumbnail.max'      => 'Ukuran thumbnail maksimal 5MB.',
+            'images.*.max'       => 'Ukuran setiap foto maksimal 5MB.',
         ];
     }
 }

@@ -7,6 +7,17 @@
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 <style>
     .ql-container { min-height: 350px; font-size: 1rem; }
+    .ql-editor { min-height: 350px; line-height: 1.75; }
+    .ql-editor p { margin-bottom: .8rem; }
+    .ql-editor img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        max-height: 520px;
+        object-fit: contain;
+        margin: .85rem auto;
+        border-radius: 6px;
+    }
     .image-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 8px; }
     .image-preview-item { position: relative; }
     .image-preview-item img { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; }
@@ -90,7 +101,7 @@
                         <label class="form-label fw-semibold">Upload Foto Baru</label>
                         <input type="file" name="images[]" multiple class="form-control"
                                accept="image/jpeg,image/png,image/webp" id="imagesInput">
-                        <small class="text-muted">Format JPG/PNG/WEBP, max 2MB per foto</small>
+                        <small class="text-muted">JPG/PNG/WEBP, maks 5MB per foto. File akan dikompres otomatis.</small>
                         <div class="image-preview-grid mt-3" id="newImagePreviews"></div>
                     </div>
                 </div>
@@ -190,7 +201,7 @@
                         @endif
                         <input type="file" name="thumbnail" class="form-control @error('thumbnail') is-invalid @enderror"
                                accept="image/jpeg,image/png,image/webp" id="thumbInput">
-                        <small class="text-muted">JPG/PNG/WEBP, max 2MB. Optimal: 800×500px</small>
+                        <small class="text-muted">JPG/PNG/WEBP, maks 5MB. Disimpan otomatis 800x500px.</small>
                         @error('thumbnail')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
@@ -203,6 +214,10 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script>
+const maxImageSize = 5 * 1024 * 1024;
+const editorImageUploadUrl = @json(route('admin.posts.body-image'));
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
 // Quill editor
 const quill = new Quill('#quillEditor', {
     theme: 'snow',
@@ -218,8 +233,103 @@ const quill = new Quill('#quillEditor', {
     }
 });
 
+async function uploadEditorImage(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        throw new Error('File harus berupa gambar.');
+    }
+
+    if (file.size > maxImageSize) {
+        throw new Error('Ukuran gambar maksimal 5MB.');
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch(editorImageUploadUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw new Error('Gagal mengunggah gambar.');
+    }
+
+    return response.json();
+}
+
+function insertEditorImage(url) {
+    const range = quill.getSelection(true);
+    quill.insertEmbed(range.index, 'image', url, 'user');
+    quill.setSelection(range.index + 1, 0, 'silent');
+}
+
+quill.getModule('toolbar').addHandler('image', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp';
+    input.onchange = async () => {
+        try {
+            const data = await uploadEditorImage(input.files[0]);
+            insertEditorImage(data.url);
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+    input.click();
+});
+
+quill.root.addEventListener('paste', async (event) => {
+    const files = [...(event.clipboardData?.items || [])]
+        .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+        .map(item => item.getAsFile())
+        .filter(Boolean);
+    const hasText = (event.clipboardData?.getData('text/plain') || '').trim().length > 0;
+
+    if (!files.length || hasText) return;
+
+    event.preventDefault();
+
+    for (const file of files) {
+        try {
+            const data = await uploadEditorImage(file);
+            insertEditorImage(data.url);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+});
+
+quill.root.addEventListener('drop', async (event) => {
+    const files = [...(event.dataTransfer?.files || [])]
+        .filter(file => file.type.startsWith('image/'));
+
+    if (!files.length) return;
+
+    event.preventDefault();
+
+    for (const file of files) {
+        try {
+            const data = await uploadEditorImage(file);
+            insertEditorImage(data.url);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+});
+
 // Sync Quill to hidden textarea on submit
 document.getElementById('postForm').addEventListener('submit', function() {
+    quill.root.querySelectorAll('img').forEach(img => {
+        img.removeAttribute('width');
+        img.removeAttribute('height');
+        img.removeAttribute('style');
+        img.classList.add('post-content-image');
+    });
+
     document.getElementById('bodyInput').value = quill.root.innerHTML;
 });
 
@@ -227,6 +337,12 @@ document.getElementById('postForm').addEventListener('submit', function() {
 document.getElementById('thumbInput').addEventListener('change', function() {
     const prev = document.getElementById('thumbPreview');
     if (this.files[0]) {
+        if (this.files[0].size > maxImageSize) {
+            alert('Ukuran thumbnail maksimal 5MB.');
+            this.value = '';
+            return;
+        }
+
         prev.src = URL.createObjectURL(this.files[0]);
         prev.classList.remove('d-none');
     }
@@ -236,6 +352,13 @@ document.getElementById('thumbInput').addEventListener('change', function() {
 document.getElementById('imagesInput').addEventListener('change', function() {
     const container = document.getElementById('newImagePreviews');
     container.innerHTML = '';
+
+    if ([...this.files].some(file => file.size > maxImageSize)) {
+        alert('Ukuran setiap foto maksimal 5MB.');
+        this.value = '';
+        return;
+    }
+
     [...this.files].forEach(file => {
         const div = document.createElement('div');
         div.className = 'image-preview-item';

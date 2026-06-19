@@ -49,17 +49,18 @@ Route::get('/umkm', [UmkmController::class, 'index'])->name('umkm.index');
 Route::get('/umkm/daftar', [UmkmController::class, 'create'])->name('umkm.create');
 Route::post('/umkm/daftar', [UmkmController::class, 'store'])
     ->name('umkm.store')
-    ->middleware('throttle:5,1'); // Rate limit: 5 per minute
+    ->middleware('throttle:5,1');
 Route::get('/umkm/berhasil', [UmkmController::class, 'success'])->name('umkm.success');
 
 // Pencarian
 Route::get('/pencarian', [SearchController::class, 'index'])->name('search');
 
 // ══════════════════════════════════════════════════════════
-// ADMIN AUTH ROUTES (no guard prefix)
+// ADMIN AUTH ROUTES
 // ══════════════════════════════════════════════════════════
 
 Route::prefix('admin')->name('admin.')->group(function () {
+
     // Login (guest only)
     Route::middleware('guest')->group(function () {
         Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
@@ -73,12 +74,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Protected admin routes
     Route::middleware('auth')->group(function () {
+
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Berita
+        Route::post('posts/body-image', [PostController::class, 'uploadBodyImage'])
+            ->name('posts.body-image');
         Route::resource('posts', PostController::class);
-        Route::delete('posts/images/{image}', [PostController::class, 'destroyImage'])->name('posts.images.destroy');
+        Route::delete('posts/images/{image}', [PostController::class, 'destroyImage'])
+            ->name('posts.images.destroy');
 
         // Kategori
         Route::resource('categories', CategoryController::class);
@@ -89,7 +94,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Galeri
         Route::resource('galleries', AdminGalleryController::class);
 
-        // Pengumuman
+        // ── Pengumuman ──────────────────────────────────────────────────
+        // Gunakan resource penuh agar method show (GET /admin/announcements/{id})
+        // tersedia untuk kebutuhan JSON atau halaman detail di masa depan.
         Route::resource('announcements', AnnouncementController::class);
 
         // UMKM Moderasi

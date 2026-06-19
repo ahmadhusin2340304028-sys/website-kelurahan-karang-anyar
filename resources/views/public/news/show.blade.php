@@ -6,6 +6,93 @@
 @section('og_description', $post->excerpt)
 @section('og_image', $post->thumbnail_url)
 
+@push('styles')
+<style>
+    .news-article-title {
+        line-height: 1.25;
+    }
+
+    .article-hero-image {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        max-height: 450px;
+        object-fit: cover;
+    }
+
+    .post-body {
+        color: #2b2f33;
+        font-size: 1.04rem;
+        line-height: 1.85;
+        overflow-wrap: anywhere;
+    }
+
+    .post-body p {
+        margin-bottom: 1rem;
+        text-align: justify;
+    }
+
+    .post-body h2,
+    .post-body h3,
+    .post-body h4 {
+        line-height: 1.35;
+        margin: 1.75rem 0 .85rem;
+        font-weight: 700;
+    }
+
+    .post-body ul,
+    .post-body ol {
+        margin: 0 0 1rem 1.25rem;
+        padding-left: 1rem;
+    }
+
+    .post-body li {
+        margin-bottom: .35rem;
+    }
+
+    .post-body blockquote {
+        border-left: 4px solid var(--gov-blue);
+        margin: 1.25rem 0;
+        padding: .75rem 1rem;
+        background: var(--gov-blue-light);
+        color: #32465a;
+    }
+
+    .post-body img,
+    .post-body video,
+    .post-body iframe {
+        display: block;
+        max-width: 100% !important;
+        height: auto !important;
+        margin: 1.25rem auto;
+    }
+
+    .post-body img {
+        width: auto !important;
+        max-height: 640px;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    .post-body .ql-align-center { text-align: center; }
+    .post-body .ql-align-right { text-align: right; }
+    .post-body .ql-align-justify { text-align: justify; }
+    .post-body .ql-indent-1 { margin-left: 1.5rem; }
+    .post-body .ql-indent-2 { margin-left: 3rem; }
+    .post-body .ql-indent-3 { margin-left: 4.5rem; }
+
+    @media (max-width: 768px) {
+        .post-body {
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        .post-body p {
+            text-align: left;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 
 <div class="breadcrumb-gov">
@@ -44,17 +131,16 @@
                         </small>
                     </div>
 
-                    <h1 class="h2 fw-bold mb-4">{{ $post->title }}</h1>
+                    <h1 class="h2 fw-bold mb-4 news-article-title">{{ $post->title }}</h1>
 
                     {{-- Thumbnail --}}
                     <img src="{{ $post->thumbnail_url }}"
                          alt="{{ $post->title }}"
-                         class="img-fluid rounded mb-4 w-100"
-                         style="max-height: 450px; object-fit: cover;"
+                         class="img-fluid rounded mb-4 article-hero-image"
                          loading="lazy">
 
                     {{-- Body --}}
-                    <div class="post-body lh-lg" style="text-align: justify; font-size: 1.02rem;">
+                    <div class="post-body">
                         {!! $post->body !!}
                     </div>
 

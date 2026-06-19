@@ -15,10 +15,15 @@
 
 <section class="py-5">
     <div class="container">
-        <h1 class="section-title h3 mb-5 text-center center">ASN Kelurahan</h1>
+        <div class="row g-4">
+            <div class="col-lg-3">
+                @include('public.profile.sidebar')
+            </div>
+            <div class="col-lg-9">
+                <h1 class="section-title h3 mb-5 text-center center">ASN Kelurahan</h1>
 
-        @forelse($officials as $levelKey => $group)
-        <div class="mb-5">
+                @forelse($officials as $levelKey => $group)
+                <div class="mb-5">
             <h5 class="fw-bold text-primary border-bottom border-primary pb-2 mb-4">
                 <i class="bi bi-person-badge me-2"></i>{{ $levels[$levelKey] ?? ucfirst($levelKey) }}
             </h5>
@@ -33,13 +38,13 @@
                         </div>
                         <div class="card-body pt-0">
                             <h6 class="fw-bold mb-1">{{ $official->name }}</h6>
-                            <p class="text-muted small mb-0">{{ $official->position }}</p>
                             @if($official->phone)
-                                <a href="tel:{{ $official->phone }}"
-                                   class="btn btn-outline-primary btn-sm mt-2">
-                                    <i class="bi bi-telephone me-1"></i>{{ $official->phone }}
-                                </a>
+                                <h7>
+                                    <i class="bi bi-person-badge"></i> NIP. {{ $official->phone }}
+                                </h7>
                             @endif
+                            <p class="text-muted small mb-0">{{ $official->position }}</p>
+                            
                         </div>
                     </div>
                 </div>
@@ -52,6 +57,8 @@
             Data ASN belum tersedia.
         </div>
         @endforelse
+            </div>
+        </div>
     </div>
 </section>
 @endsection

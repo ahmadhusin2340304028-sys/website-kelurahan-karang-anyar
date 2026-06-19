@@ -14,13 +14,18 @@
 
 <section class="py-5">
     <div class="container">
-        <h1 class="section-title h3 mb-5">Hubungi Kami</h1>
-
         <div class="row g-4">
-            <div class="col-lg-5">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-4">Informasi Kontak</h5>
+            <div class="col-lg-3">
+                @include('public.profile.sidebar')
+            </div>
+            <div class="col-lg-9">
+                <h1 class="section-title h3 mb-5">Hubungi Kami</h1>
+
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-4">Informasi Kontak</h5>
 
                         <div class="d-flex gap-3 mb-4">
                             <div class="flex-shrink-0">

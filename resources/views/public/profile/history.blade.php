@@ -15,8 +15,11 @@
 
 <section class="py-5">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                @include('public.profile.sidebar')
+            </div>
+            <div class="col-lg-9">
                 <h1 class="section-title h3 mb-4">Sejarah Kelurahan</h1>
 
                 @php $history = \App\Models\Setting::get('history') @endphp

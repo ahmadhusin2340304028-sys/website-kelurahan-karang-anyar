@@ -58,7 +58,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Nomor Telepon</label>
+                                <label class="form-label fw-semibold">NIP</label>
                                 <input type="text" name="phone" class="form-control"
                                        value="{{ old('phone', $official->phone ?? '') }}"
                                        placeholder="Opsional">
